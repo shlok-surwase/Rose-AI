@@ -7,7 +7,7 @@
    Get it FREE at: https://aistudio.google.com
    Steps: Sign in → Get API Key → Create API Key → Copy → Paste
    ────────────────────────────────────────────────────────── */
-const GEMINI_API_KEY = "AIzaSyCIAnMscCvFfQPQVCFLJ7E7wWyTtAUqgRA";
+const GEMINI_API_KEY = "AIzaSyBhpKOESKvhbsMEnR-gXaxFPub2dE-1PE8";
 
 /* ──────────────────────────────────────────────────────────
    SETTINGS
