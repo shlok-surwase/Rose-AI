@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoseAI — Plant Disease Detection</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- TensorFlow + Teachable Machine -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <!-- GSAP -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js"></script>
+</head>
+<body>
+
+  <!-- ░░ CURSOR ░░ -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+
+  <!-- ░░ FLOATING LEAVES LAYER ░░ -->
+  <div class="leaves-layer" id="leavesLayer" aria-hidden="true"></div>
+
+  <!-- ░░ NAVBAR ░░ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <svg class="logo-leaf" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C10 4 5 10 5 17C5 22 9 27 16 27C23 27 27 22 27 17C27 10 22 4 16 4Z" fill="#4ade80" opacity="0.9"/>
+          <path d="M16 8C16 8 20 13 20 17" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        </svg>
+        <span>Rose<em>AI</em></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#home"     class="nav-link active" data-section="home">Home</a></li>
+        <li><a href="#diagnose" class="nav-link"         data-section="diagnose">Diagnose</a></li>
+        <li><a href="#diseases" class="nav-link"         data-section="diseases">Diseases</a></li>
+        <li><a href="#about"    class="nav-link"         data-section="about">About</a></li>
+        <li><a href="#contact"  class="nav-link"         data-section="contact">Contact</a></li>
+      </ul>
+      <a href="#diagnose" class="nav-cta nav-link-scroll">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Image
+      </a>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════════
+       SECTION 1 — HOME / HERO
+  ════════════════════════════════ -->
+  <section class="section hero-section" id="home">
+    <div class="hero-bg-orb orb-1"></div>
+    <div class="hero-bg-orb orb-2"></div>
+    <div class="hero-bg-orb orb-3"></div>
+
+    <div class="hero-layout">
+      <!-- Left content -->
+      <div class="hero-left">
+        <div class="hero-tag" id="heroTag">
+          <span class="tag-pulse"></span>
+          AI-Powered Plant Diagnosis
+        </div>
+        <h1 class="hero-title" id="heroTitle">
+          <span class="line">Diagnose Your</span>
+          <span class="line accent">Rose Plants</span>
+          <span class="line">Instantly</span>
+        </h1>
+        <p class="hero-sub" id="heroSub">
+          Upload a photo of your rose leaf. Our AI detects diseases,
+          explains the cause, and gives you a simple treatment plan —
+          no gardening knowledge required.
+        </p>
+        <div class="hero-btns" id="heroBtns">
+          <a href="#diagnose" class="btn-primary nav-link-scroll">
+            Start Diagnosis
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#about" class="btn-ghost nav-link-scroll">Learn More</a>
+        </div>
+        <!-- Stats -->
+        <div class="hero-stats" id="heroStats">
+          <div class="stat-item">
+            <span class="stat-n">4</span>
+            <span class="stat-l">Disease Classes</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-n">AI</span>
+            <span class="stat-l">Powered</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-n">Free</span>
+            <span class="stat-l">To Use</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right — 3D Rose Stage -->
+      <div class="hero-right" id="heroRight">
+        <div class="rose-stage" id="roseStage">
+          <!-- Glow rings -->
+          <div class="glow-ring r1" id="glowR1"></div>
+          <div class="glow-ring r2" id="glowR2"></div>
+          <div class="glow-ring r3" id="glowR3"></div>
+
+          <!-- Sketchfab rose embed -->
+          <div class="rose-iframe-wrap" id="roseWrap">
+            <iframe
+              id="roseIframe"
+              title="Red Rose"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay; fullscreen; xr-spatial-tracking"
+              src="https://sketchfab.com/models/74520e87c3ed46898668c83356dd9cfa/embed?autostart=1&ui_hint=0&ui_infos=0&ui_watermark=0&ui_stop=0&ui_inspector=0&ui_annotations=0&ui_settings=0&ui_vr=0&ui_help=0&ui_ar=0&transparent=1&dnt=1">
+            </iframe>
+            <!-- CSS overlay to hide Sketchfab branding -->
+            <div class="sketchfab-cover top-cover"></div>
+            <div class="sketchfab-cover bottom-cover"></div>
+            <div class="sketchfab-cover left-cover"></div>
+          </div>
+
+          <!-- Floating disease badges -->
+          <div class="float-badge fb-1" id="fb1">
+            <span class="fb-dot green"></span>
+            <div><div class="fb-name">Healthy Leaf</div><div class="fb-conf">95% Confidence</div></div>
+          </div>
+          <div class="float-badge fb-2" id="fb2">
+            <span class="fb-dot amber"></span>
+            <div><div class="fb-name">Black Spot</div><div class="fb-conf">82% Confidence</div></div>
+          </div>
+          <div class="float-badge fb-3" id="fb3">
+            <span class="fb-dot red"></span>
+            <div><div class="fb-name">Rose Rust</div><div class="fb-conf">67% Confidence</div></div>
+          </div>
+          <!-- Accuracy badge -->
+          <div class="float-badge fb-4" id="fb4">
+            <div class="acc-label">Model Accuracy</div>
+            <div class="acc-num">96.4%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="scroll-indicator" id="scrollInd">
+      <div class="scroll-line"></div>
+      <span>Scroll to explore</span>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════
+       SECTION 2 — DIAGNOSE
+  ════════════════════════════════ -->
+  <section class="section diagnose-section" id="diagnose">
+    <div class="section-bg-orb d-orb-1"></div>
+    <div class="section-bg-orb d-orb-2"></div>
+
+    <div class="section-head">
+      <p class="eyebrow">AI Diagnosis</p>
+      <h2 class="section-title">Diagnose Your Plant</h2>
+      <p class="section-desc">Upload a clear photo of a single rose leaf on a plain background for the most accurate results.</p>
+    </div>
+
+    <!-- Photo tip banner -->
+    <div class="photo-tip">
+      <span class="tip-icon">💡</span>
+      <div>
+        <strong>For best results:</strong> Place your rose leaf on a clean, plain white or light-coloured surface before taking the photo.
+        Avoid busy backgrounds, shadows, or multiple leaves in one image. A clear, well-lit single leaf gives the most accurate detection.
+      </div>
+    </div>
+
+    <div class="diagnose-layout">
+      <!-- Upload panel -->
+      <div class="upload-panel" id="uploadPanel">
+        <div class="panel-header">
+          <div class="panel-icon">📷</div>
+          <h3>Upload Leaf Photo</h3>
+          <p>JPG, PNG, WEBP supported</p>
+        </div>
+
+        <div class="dropzone" id="dz" onclick="document.getElementById('fileIn').click()">
+          <input type="file" id="fileIn" accept="image/*" hidden />
+          <div class="dz-idle" id="dzIdle">
+            <div class="dz-upload-svg">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="dz-main">Drop image here</p>
+            <p class="dz-hint">or click to browse</p>
+          </div>
+          <div class="dz-preview" id="dzPrev" style="display:none">
+            <img id="prevImg" alt="Leaf preview" />
+            <button class="dz-remove" id="dzRemove">✕</button>
+          </div>
+        </div>
+
+        <button class="btn-analyze" id="analyzeBtn" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Analyze Leaf
+        </button>
+
+        <p class="diag-status" id="diagStatus">Upload an image to begin</p>
+
+        <!-- Summary -->
+        <div class="summary-box" id="summaryBox" style="display:none">
+          <div class="summary-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Analysis Summary
+          </div>
+          <div id="summaryBody"></div>
+        </div>
+      </div>
+
+      <!-- Center rose (smaller) -->
+      <div class="diag-rose-col">
+        <div class="diag-rose-wrap">
+          <div class="glow-ring r1" style="width:260px;height:260px;bottom:-30px"></div>
+          <iframe
+            title="Red Rose Diagnose"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; fullscreen"
+            class="diag-rose-iframe"
+            src="https://sketchfab.com/models/74520e87c3ed46898668c83356dd9cfa/embed?autostart=1&ui_hint=0&ui_infos=0&ui_watermark=0&ui_stop=0&ui_inspector=0&ui_annotations=0&ui_settings=0&ui_vr=0&ui_help=0&ui_ar=0&transparent=1&dnt=1">
+          </iframe>
+          <div class="sketchfab-cover top-cover"></div>
+          <div class="sketchfab-cover bottom-cover"></div>
+          <div class="sketchfab-cover left-cover"></div>
+          <p class="rose-drag-hint">🖱 Drag to rotate</p>
+        </div>
+      </div>
+
+      <!-- Results panel -->
+      <div class="results-panel" id="resultsPanel">
+        <div class="results-placeholder" id="resultsPlaceholder">
+          <div class="placeholder-icon">🌿</div>
+          <p>Results appear here after analysis</p>
+        </div>
+        <div class="results-cards" id="resultsCards" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">
+      <div class="loading-box">
+        <div class="loader-ring"></div>
+        <p class="loader-title" id="loaderTitle">Scanning leaf…</p>
+        <p class="loader-sub">Running AI model</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════
+       SECTION 3 — DISEASES
+  ════════════════════════════════ -->
+  <section class="section diseases-section" id="diseases">
+    <div class="section-bg-orb dis-orb-1"></div>
+
+    <div class="section-head">
+      <p class="eyebrow">Disease Library</p>
+      <h2 class="section-title">Rose Plant Conditions</h2>
+      <p class="section-desc">Our AI detects these 5 conditions from a single leaf photo</p>
+    </div>
+
+    <div class="disease-grid">
+      <div class="d-card" data-delay="0">
+        <div class="d-card-glow"></div>
+        <div class="d-card-icon">✅</div>
+        <h3>Healthy Leaf</h3>
+        <div class="d-tag d-green">No Disease</div>
+        <p>Vibrant green leaf with no spots, holes, or discoloration. Your plant is thriving and healthy.</p>
+        <div class="d-tip"><strong>Tip:</strong> Water at the base in the morning and check leaves weekly.</div>
+      </div>
+      <div class="d-card" data-delay="0.1">
+        <div class="d-card-glow"></div>
+        <div class="d-card-icon">🍄</div>
+        <h3>Black Spot</h3>
+        <div class="d-tag d-red">Fungal</div>
+        <p>Dark circular spots on leaves caused by the fungus Diplocarpon rosae. Thrives in warm, wet conditions.</p>
+        <div class="d-tip"><strong>Fix:</strong> Fungicide spray + remove infected leaves immediately.</div>
+      </div>
+      <div class="d-card" data-delay="0.2">
+        <div class="d-card-glow"></div>
+        <div class="d-card-icon">💧</div>
+        <h3>Downy Mildew</h3>
+        <div class="d-tag d-blue">Water Mold</div>
+        <p>Yellow patches on leaf tops with grey fuzzy growth underneath. Spreads fast in cool, humid weather.</p>
+        <div class="d-tip"><strong>Fix:</strong> Copper fungicide + improve airflow around plant.</div>
+      </div>
+      <div class="d-card" data-delay="0.3">
+        <div class="d-card-glow"></div>
+        <div class="d-card-icon">🦠</div>
+        <h3>Rose Rust</h3>
+        <div class="d-tag d-amber">Fungal</div>
+        <p>Orange powdery pustules on the underside of leaves. Spreads quickly in warm and humid conditions.</p>
+        <div class="d-tip"><strong>Fix:</strong> Sulfur-based fungicide spray every week.</div>
+      </div>
+      <div class="d-card" data-delay="0.4">
+        <div class="d-card-glow"></div>
+        <div class="d-card-icon">🐛</div>
+        <h3>Rose Sawfly</h3>
+        <div class="d-tag d-purple">Insect</div>
+        <p>Tiny larvae skeletonize leaves leaving see-through patches. Usually found on the underside of leaves.</p>
+        <div class="d-tip"><strong>Fix:</strong> Neem oil spray + manually remove visible larvae.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════
+       SECTION 4 — ABOUT
+  ════════════════════════════════ -->
+  <section class="section about-section" id="about">
+    <div class="section-bg-orb ab-orb-1"></div>
+    <div class="section-bg-orb ab-orb-2"></div>
+
+    <div class="about-hero-row">
+      <div class="about-text-col">
+        <p class="eyebrow">About RoseAI</p>
+        <h2 class="about-big-title">Smart Technology<br/><em>for Healthier Roses</em></h2>
+        <p class="about-desc">RoseAI helps gardeners and plant lovers identify rose leaf diseases instantly using AI and provides easy-to-follow treatment recommendations that anyone can follow — no expertise needed.</p>
+        <div class="about-features">
+          <div class="ab-feat">
+            <span class="ab-feat-icon">🎯</span>
+            <div>
+              <h4>AI-Powered Accuracy</h4>
+              <p>Trained on thousands of real rose leaf images across 5 disease classes.</p>
+            </div>
+          </div>
+          <div class="ab-feat">
+            <span class="ab-feat-icon">⚡</span>
+            <div>
+              <h4>Instant Results</h4>
+              <p>Get disease detection and treatment advice in just a few seconds.</p>
+            </div>
+          </div>
+          <div class="ab-feat">
+            <span class="ab-feat-icon">🔒</span>
+            <div>
+              <h4>Private & Secure</h4>
+              <p>All image processing happens in your browser. Nothing is uploaded to any server.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="about-rose-col">
+        <div class="about-rose-wrap">
+          <div class="glow-ring r1" style="width:280px;height:280px;bottom:-30px"></div>
+          <iframe
+            title="Red Rose About"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; fullscreen"
+            class="about-rose-iframe"
+            src="https://sketchfab.com/models/74520e87c3ed46898668c83356dd9cfa/embed?autostart=1&ui_hint=0&ui_infos=0&ui_watermark=0&ui_stop=0&ui_inspector=0&ui_annotations=0&ui_settings=0&ui_vr=0&ui_help=0&ui_ar=0&transparent=1&dnt=1">
+          </iframe>
+          <div class="sketchfab-cover top-cover"></div>
+          <div class="sketchfab-cover bottom-cover"></div>
+          <div class="sketchfab-cover left-cover"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Process steps -->
+    <div class="process-block">
+      <p class="eyebrow" style="text-align:center">HOW IT WORKS</p>
+      <h3 class="process-title">Simple Steps, Powerful Results</h3>
+      <div class="process-steps-row">
+        <div class="p-step">
+          <div class="p-num">01</div>
+          <div class="p-icon">📷</div>
+          <h4>Upload Photo</h4>
+          <p>Place leaf on plain background. Take a clear, well-lit photo and upload it.</p>
+        </div>
+        <div class="p-connector"><div class="p-dot-line"></div></div>
+        <div class="p-step">
+          <div class="p-num">02</div>
+          <div class="p-icon">🧠</div>
+          <h4>AI Scans It</h4>
+          <p>Our trained model analyzes the leaf for patterns and visible symptoms.</p>
+        </div>
+        <div class="p-connector"><div class="p-dot-line"></div></div>
+        <div class="p-step">
+          <div class="p-num">03</div>
+          <div class="p-icon">🔍</div>
+          <h4>Detect Disease</h4>
+          <p>System identifies possible diseases and evaluates their likelihood percentage.</p>
+        </div>
+        <div class="p-connector"><div class="p-dot-line"></div></div>
+        <div class="p-step">
+          <div class="p-num">04</div>
+          <div class="p-icon">💊</div>
+          <h4>Get Treatment</h4>
+          <p>Receive simple, actionable treatment steps anyone can follow at home.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team -->
+    <div class="team-block">
+      <div class="team-left">
+        <p class="eyebrow">CREATED BY</p>
+        <h3 class="team-title">Our Team</h3>
+        <div class="team-list">
+          <div class="team-card"><span>🌿</span><span class="tm-name">Shlok</span><span class="tm-id">BSFU125001</span></div>
+          <div class="team-card"><span>🌿</span><span class="tm-name">Jason</span><span class="tm-id">BSFU125002</span></div>
+          <div class="team-card"><span>🌿</span><span class="tm-name">Somesh</span><span class="tm-id">BSFU125009</span></div>
+          <div class="team-card"><span>🌿</span><span class="tm-name">Vidhan</span><span class="tm-id">BSFU125010</span></div>
+          <div class="team-card"><span>🌿</span><span class="tm-name">Prem</span><span class="tm-id">BSFU125021</span></div>
+        </div>
+      </div>
+      <div class="team-right">
+        <div class="mission-box">
+          <div class="mission-icon">🌱</div>
+          <h3>Our Mission</h3>
+          <p>To make plant care simple, accessible, and effective for everyone using the power of artificial intelligence. No expertise required — just a photo of your rose leaf.</p>
+          <div class="mission-tags">
+            <span>AI for All</span>
+            <span>Academic Project</span>
+            <span>TensorFlow.js</span>
+            <span>Teachable Machine</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════
+       SECTION 5 — CONTACT
+  ════════════════════════════════ -->
+  <section class="section contact-section" id="contact">
+    <div class="section-bg-orb c-orb-1"></div>
+
+    <div class="section-head">
+      <p class="eyebrow">Get In Touch</p>
+      <h2 class="section-title">Contact Us</h2>
+      <p class="section-desc">Have a question or feedback? We would love to hear from you.</p>
+    </div>
+
+    <div class="contact-layout">
+      <div class="contact-form-wrap">
+        <div class="contact-form" id="contactForm">
+          <div class="form-group" id="fg1">
+            <label>Your Name</label>
+            <input type="text" placeholder="Enter your name" class="form-input" />
+          </div>
+          <div class="form-group" id="fg2">
+            <label>Email Address</label>
+            <input type="email" placeholder="Enter your email" class="form-input" />
+          </div>
+          <div class="form-group" id="fg3">
+            <label>Subject</label>
+            <input type="text" placeholder="What is this about?" class="form-input" />
+          </div>
+          <div class="form-group" id="fg4">
+            <label>Message</label>
+            <textarea placeholder="Tell us your thoughts..." class="form-input form-textarea"></textarea>
+          </div>
+          <button class="btn-submit" id="submitBtn">
+            <span class="submit-text">Send Message</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+          <!-- Success message -->
+          <div class="success-msg" id="successMsg" style="display:none">
+            <div class="success-check">✓</div>
+            <p>Message sent successfully! We will get back to you soon.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-info-col">
+        <div class="contact-info-card">
+          <div class="ci-icon">🌹</div>
+          <h3>RoseAI</h3>
+          <p>An AI-powered plant disease detection system built as an academic project for the AI for All subject.</p>
+          <div class="ci-tags">
+            <span>Academic Project</span>
+            <span>AI for All</span>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="ci-icon">🎓</div>
+          <h3>Institution</h3>
+          <p>Built by a team of 5 students passionate about combining AI with real-world problems to help everyday people.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <svg class="logo-leaf" viewBox="0 0 32 32" fill="none" style="width:22px;height:22px">
+          <path d="M16 4C10 4 5 10 5 17C5 22 9 27 16 27C23 27 27 22 27 17C27 10 22 4 16 4Z" fill="#4ade80" opacity="0.9"/>
+        </svg>
+        <span>Rose<em>AI</em></span>
+      </div>
+      <p>Built for <strong>AI for All</strong> · Academic Project · TensorFlow.js + Teachable Machine</p>
+      <p class="footer-copy">© 2026 RoseAI Team. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
