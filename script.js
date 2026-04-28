@@ -11,7 +11,7 @@ const MODEL_URL = "https://teachablemachine.withgoogle.com/models/8CNSZFfiq/";
 /* ──────────────────────────────────────────────────────────
    SETTINGS
    ────────────────────────────────────────────────────────── */
-const CONFIDENCE_CUTOFF = 0.15;
+const CONFIDENCE_CUTOFF = 0.05;
 const MAX_RESULTS       = 3;
 
 /* ──────────────────────────────────────────────────────────
