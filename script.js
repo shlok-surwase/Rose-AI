@@ -593,7 +593,6 @@ async function runPipeline() {
 
   /* Filter + sort + top 3 */
   const filtered = predictions
-    .filter(p => p.probability >= CONFIDENCE_CUTOFF)
     .sort((a, b) => b.probability - a.probability)
     .slice(0, MAX_RESULTS);
 
